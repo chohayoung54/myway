@@ -1,6 +1,7 @@
 package com.kangcho.myway.myway.Object;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,6 +25,25 @@ import java.util.Map;
 public class HttpRequest extends AsyncTask<HttpCall, String, String> {
 
     private static final String UTF_8 = "UTF-8";
+    boolean m_session = false;
+    String m_cookies = "";
+
+    public void saveCookie( HttpURLConnection conn)
+    {
+
+        Map<String, List<String>> imap = conn.getHeaderFields( ) ;
+        if( imap.containsKey( "Set-Cookie" ) )
+        {
+            List<String> lString = imap.get( "Set-Cookie" ) ;
+            for( int i = 0 ; i < lString.size() ; i++ ) {
+                m_cookies += lString.get( i ) ;
+            }
+            Log.e("zdg",m_cookies);
+            m_session = true ;
+        } else {
+            m_session = false ;
+        }
+    }
 
     @Override
     protected String doInBackground(HttpCall... params) {
@@ -36,6 +57,10 @@ public class HttpRequest extends AsyncTask<HttpCall, String, String> {
             urlConnection.setRequestMethod(httpCall.getMethodtype() == HttpCall.GET ? "GET":"POST");
             urlConnection.setReadTimeout(10000 /* milliseconds */);
             urlConnection.setConnectTimeout(15000 /* milliseconds */);
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+            if( m_session ) {
+                urlConnection.setRequestProperty( "Cookie", m_cookies );
+            }
             if(httpCall.getParams() != null && httpCall.getMethodtype() == HttpCall.POST){
                 OutputStream os = urlConnection.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, UTF_8));
